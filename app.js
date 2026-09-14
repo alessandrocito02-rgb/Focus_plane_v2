@@ -1,4 +1,4 @@
-// app.js - Motore principale Focus on Plane (Versione Stabile Completa)
+// app.js - Motore principale Focus on Plane
 
 let map, depMarker, arrMarker, planeMarker, routeLine;
 let animationFrameId;
@@ -68,7 +68,6 @@ function initMap() {
     map = L.map('map', { zoomControl: false }).setView([40.0, 10.0], 4);
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    // Tile Layer Gratuito e Stabile senza API Key
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19
@@ -170,7 +169,7 @@ function updateDisplayState(elapsed, total) {
     if (pBar) pBar.style.width = `${percent}%`;
     if (mPBar) mPBar.style.width = `${percent}%`;
 
-    // CALCOLO E AGGIORNAMENTO DISTANZA RIMANENTE IN KM
+    // Aggiornamento Distanza in KM
     if (currentDep && currentArr) {
         const totalKm = calculateDistance(currentDep.lat, currentDep.lng, currentArr.lat, currentArr.lng);
         const remainingKm = Math.max(0, Math.round(totalKm * (1 - percent / 100)));
