@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Focus on Plane</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { overscroll-behavior-y: none; }
+        #map { height: 100vh; width: 100vw; z-index: 0; position: absolute; top: 0; left: 0; }
+        .plane-icon { font-size: 28px; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4)); }
+        
+        .barcode {
+            height: 40px;
+            background: repeating-linear-gradient(to right, #1e293b, #1e293b 2px, transparent 2px, transparent 4px, #1e293b 4px, #1e293b 5px, transparent 5px, transparent 8px, #1e293b 8px, #1e293b 12px, transparent 12px, transparent 14px);
+        }
+
+        select optgroup { font-weight: 800; color: #2563eb; background: #f8fafc; }
+        select option { font-weight: 500; color: #1e293b; background: #ffffff; }
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen w-screen overflow-hidden font-sans fixed inset-0">
+
+    <!-- Mappa a schermo intero -->
+    <div id="map"></div>
+
+    <!-- Mini-Barra di Volo -->
+    <div id="mini-bar" onclick="toggleDrawer()" class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-white/95 backdrop-blur-xl border border-slate-200 z-20 p-4 rounded-2xl shadow-xl transition-all duration-500 transform translate-y-32 cursor-pointer hover:bg-slate-50">
+        <div class="flex justify-between items-center mb-2">
+            <span class="font-bold text-slate-700 text-sm truncate pr-2" id="mini-route">Preparazione...</span>
+            <span class="font-mono font-bold text-blue-600 text-lg" id="mini-timer">25:00</span>
+        </div>
+        <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden shadow-inner">
+            <div id="mini-progress-bar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full w-0"></div>
+        </div>
+        <div class="text-center mt-1 text-[10px] uppercase tracking-wider text-slate-400 font-bold">Tocca per espandere</div>
+    </div>
+
+    <!-- Tendina Principale (Drawer) -->
+    <div id="drawer" class="fixed bottom-0 inset-x-0 md:top-4 md:left-4 md:bottom-4 md:right-auto md:w-[22rem] bg-white/95 backdrop-blur-2xl z-30 rounded-t-[2rem] md:rounded-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] transition-all duration-500 transform flex flex-col max-h-[90vh] md:max-h-none border-t md:border border-slate-200">
+        <div class="w-full flex justify-center pt-3 pb-2 md:hidden cursor-pointer" onclick="toggleDrawer()">
+            <div class="w-12 h-1.5 bg-slate-300 rounded-full"></div>
+        </div>
+
+        <div class="px-6 pb-6 pt-2 md:pt-6 overflow-y-auto flex-1 space-y-6 no-scrollbar">
+            <!-- Header -->
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <span class="text-3xl">✈️</span>
+                    <div>
+                        <h1 class="font-black text-lg tracking-wider text-blue-600">FOCUS ON PLANE</h1>
+                        <p id="flight-status" class="text-xs text-emerald-600 font-bold uppercase tracking-wide">A terra</p>
+                    </div>
+                </div>
+                <button onclick="toggleDrawer()" class="bg-slate-100 p-2 rounded-full text-slate-500 hover:bg-slate-200 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+            </div>
+
+            <!-- Timer -->
+            <div>
+                <div class="flex justify-between text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">
+                    <span id="label-dep">Partenza</span>
+                    <span id="label-arr">Destinazione</span>
+                </div>
+                <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden p-0.5 relative shadow-inner mb-3">
+                    <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full transition-all duration-75 w-0 shadow-md"></div>
+                </div>
+                <div id="timer-display" class="text-7xl font-black tracking-tighter text-slate-800 text-center font-mono py-2">25:00</div>
+            </div>
+
+            <!-- Controlli Volo -->
+            <div class="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <div class="flex flex-col">
+                    <label class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Da dove parti?</label>
+                    <select id="departure" class="bg-white border border-slate-200 text-slate-800 font-bold p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-full" onchange="updateDestinations()"></select>
+                </div>
+                
+                <div class="flex flex-col">
+                    <label class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Tempo (Carburante)</label>
+                    <select id="duration" class="bg-white border border-slate-200 text-blue-600 font-black p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 w-full" onchange="updateDestinations()">
+                        <option value="1">1 min (Test)</option>
+                        <option value="15">15 min</option>
+                        <option value="25" selected>25 min</option>
+                        <option value="40">40 min</option>
+                        <option value="45">45 min</option>
+                        <option value="60">60 min</option>
+                        <option value="90">90 min</option>
+                        <option value="120">120+ min</option>
+                    </select>
+                </div>
+
+                <div class="flex flex-col">
+                    <label class="text-slate-500 text-[10px] uppercase font-bold tracking-wider mb-1">Destinazione</label>
+                    <select id="arrival" class="bg-white border border-slate-200 text-emerald-600 font-black p-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full" onchange="selectDestination()"></select>
+                </div>
+            </div>
+
+            <!-- Pulsanti -->
+            <div class="grid grid-cols-2 gap-3">
+                <button id="btn-start" onclick="startFlight()" class="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition shadow-lg shadow-blue-500/30 text-lg">AUTORIZZA DECOLLO</button>
+                <button id="btn-pause" onclick="pauseFlight()" class="col-span-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-2xl transition shadow-md hidden">PAUSA</button>
+                <button id="btn-resume" onclick="resumeFlight()" class="col-span-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-2xl transition shadow-md hidden">RIPRENDI</button>
+                <button id="btn-reset" onclick="resetFlight()" class="col-span-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-2xl transition hidden">ABORTISCI</button>
+            </div>
+
+            <button onclick="toggleWallet()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-2xl transition shadow-md flex items-center justify-center gap-2 mt-4">
+                🛂 Sfoglia Passaporto
+            </button>
+        </div>
+    </div>
+
+    <!-- Modale Biglietto -->
+    <div id="ticket-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl overflow-hidden max-w-2xl w-full flex flex-col md:flex-row transform scale-95 transition-transform duration-300" id="ticket-content">
+            <div class="bg-blue-600 p-6 text-white flex flex-col justify-between w-full md:w-2/3 border-r-2 border-dashed border-blue-300 relative">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black tracking-widest uppercase">Boarding Pass</h2>
+                    <span class="text-blue-200 text-3xl">✈️</span>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex justify-between">
+                        <div>
+                            <p class="text-blue-200 text-xs uppercase tracking-wider">Passeggero</p>
+                            <p class="font-bold text-lg">Capitano Focus</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-blue-200 text-xs uppercase tracking-wider">Volo</p>
+                            <p class="font-bold text-lg font-mono" id="modal-flight-num">FP-0000</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between bg-blue-700/50 p-3 rounded-lg">
+                        <div class="w-2/5">
+                            <p class="text-blue-200 text-xs uppercase tracking-wider">Da</p>
+                            <p class="font-bold text-xl truncate" id="modal-dep">Roma</p>
+                        </div>
+                        <div class="w-1/5 text-center text-blue-300 text-2xl">➔</div>
+                        <div class="w-2/5 text-right">
+                            <p class="text-blue-200 text-xs uppercase tracking-wider">A</p>
+                            <p class="font-bold text-xl truncate" id="modal-arr">Londra</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between">
+                        <div>
+                            <p class="text-blue-200 text-xs uppercase tracking-wider">Data</p>
+                            <p class="font-bold" id="modal-date">01/01/2026</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-blue-200 text-xs uppercase tracking-wider">Durata</p>
+                            <p class="font-bold" id="modal-duration">25 min</p>
+                        </div>
+                    </div>
+                    
+                    <!-- RIGA TURBOLENZE (Nuova) -->
+                    <div class="mt-2 pt-3 border-t border-blue-400/30 flex justify-between items-center">
+                        <span class="text-blue-200 text-xs uppercase tracking-wider">Stabilità Volo</span>
+                        <span class="font-bold text-sm" id="modal-turbulence">Analisi in corso...</span>
+                    </div>
+
+                </div>
+                <div class="absolute -top-3 -right-3 w-6 h-6 bg-slate-900/60 rounded-full"></div>
+                <div class="absolute -bottom-3 -right-3 w-6 h-6 bg-slate-900/60 rounded-full"></div>
+            </div>
+            <div class="bg-blue-50 p-6 w-full md:w-1/3 flex flex-col justify-between items-center text-slate-800">
+                <div class="text-center w-full">
+                    <p class="text-slate-400 text-xs uppercase tracking-wider">Classe</p>
+                    <p class="font-bold text-blue-600 text-lg uppercase">Deep Work</p>
+                </div>
+                <div class="w-full barcode my-4"></div>
+                <button onclick="closeTicketAndSave()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 rounded-xl transition shadow-md">
+                    Conserva
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Passaporto -->
+    <div id="wallet-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col">
+            <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-3xl">
+                <h2 class="text-2xl font-black text-slate-800 flex items-center gap-2">🛂 Passaporto</h2>
+                <button onclick="toggleWallet()" class="bg-slate-200 p-2 rounded-full text-slate-600 hover:bg-slate-300 font-bold">&times;</button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1 bg-slate-100 space-y-3" id="wallet-list">
+                <div class="text-center text-slate-500 py-8 font-bold">Nessun volo registrato.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Moduli caricati nell'ordine corretto per non far sparire la mappa -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="airports.js"></script>
+    <script src="weather.js"></script>
+    <script src="turbulence.js"></script>
+    <script src="notifications.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
