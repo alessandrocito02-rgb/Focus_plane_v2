@@ -340,26 +340,24 @@ function toggleWallet() {
     if (modal) modal.classList.toggle('hidden');
 }
 
-// NUOVO: LOGICA CAMBIO SCHEDE PASSAPORTO (BIGLIETTI VS OBIETTIVI)
+// NUOVO: LOGICA CAMBIO SCHEDE PASSAPORTO A 3 TAB
 function switchPassportTab(tab) {
-    const btnTickets = document.getElementById('tab-btn-tickets');
-    const btnAch = document.getElementById('tab-btn-achievements');
-    const tabTickets = document.getElementById('tab-content-tickets');
-    const tabAch = document.getElementById('tab-content-achievements');
-
-    if (!btnTickets || !btnAch || !tabTickets || !tabAch) return;
-
-    if (tab === 'tickets') {
-        btnTickets.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider text-blue-600 border-b-2 border-blue-600";
-        btnAch.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider text-slate-400 border-b-2 border-transparent hover:text-slate-600";
-        tabTickets.classList.remove('hidden');
-        tabAch.classList.add('hidden');
-    } else {
-        btnAch.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider text-amber-500 border-b-2 border-amber-500";
-        btnTickets.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider text-slate-400 border-b-2 border-transparent hover:text-slate-600";
-        tabAch.classList.remove('hidden');
-        tabTickets.classList.add('hidden');
-    }
+    const tabs = ['profile', 'tickets', 'achievements'];
+    
+    tabs.forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        const content = document.getElementById(`tab-content-${t}`);
+        if (!btn || !content) return;
+        
+        if (t === tab) {
+            btn.className = "flex-1 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider border-b-2 text-blue-600 border-blue-600";
+            if(t === 'achievements') btn.className = btn.className.replace('text-blue-600', 'text-amber-500').replace('border-blue-600', 'border-amber-500');
+            content.classList.remove('hidden');
+        } else {
+            btn.className = "flex-1 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400 border-b-2 border-transparent hover:text-slate-600";
+            content.classList.add('hidden');
+        }
+    });
 }
 
 // AGGIORNATO: ORA RENDERIZZA I BIGLIETTI NELLA SCHEDA GIUSTA E CARICA GLI OBIETTIVI
