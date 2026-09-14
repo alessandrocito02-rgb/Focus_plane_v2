@@ -101,26 +101,15 @@ function checkAchievements(wallet) {
     return unlockedIds;
 }
 
-// Renderizza la griglia degli obiettivi nella modale Passaporto
-function renderAchievementsList(wallet) {
-    const container = document.getElementById('achievements-grid');
-    if (!container) return;
-
-    const unlocked = checkAchievements(wallet);
-    const unlockedCount = unlocked.size;
-
-    document.getElementById('achievements-progress-text').innerText = `${unlockedCount} / 30 Sbloccati`;
-    document.getElementById('achievements-progress-bar').style.width = `${(unlockedCount / 30) * 100}%`;
-
-    container.innerHTML = '';
+container.innerHTML = '';
     ACHIEVEMENTS_LIST.forEach(ach => {
         const isUnlocked = unlocked.has(ach.id);
         container.innerHTML += `
-            <div class="p-3 rounded-2xl border ${isUnlocked ? 'bg-amber-50/60 border-amber-200' : 'bg-slate-50 border-slate-200 opacity-60'} flex items-center gap-3 transition">
+            <div class="p-3 rounded-2xl border ${isUnlocked ? 'bg-amber-50/60 border-amber-200' : 'bg-slate-50 border-slate-200'} flex items-center gap-3 transition">
                 <div class="text-3xl p-2 rounded-xl ${isUnlocked ? 'bg-amber-100' : 'bg-slate-200 grayscale'}">${ach.icon}</div>
                 <div class="flex-1 min-w-0">
-                    <p class="font-black text-xs ${isUnlocked ? 'text-amber-900' : 'text-slate-700'} truncate">${ach.name}</p>
-                    <p class="text-[10px] text-slate-500 font-medium leading-tight">${ach.desc}</p>
+                    <p class="font-black text-xs ${isUnlocked ? 'text-amber-900' : 'text-slate-800'} truncate">${ach.name}</p>
+                    <p class="text-[10px] ${isUnlocked ? 'text-amber-700' : 'text-slate-600'} font-medium leading-tight">${ach.desc}</p>
                 </div>
                 <div class="text-xs font-bold ${isUnlocked ? 'text-amber-600' : 'text-slate-400'}">
                     ${isUnlocked ? '🔓' : '🔒'}
@@ -128,4 +117,3 @@ function renderAchievementsList(wallet) {
             </div>
         `;
     });
-}
