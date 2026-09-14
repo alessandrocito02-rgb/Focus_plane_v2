@@ -207,27 +207,74 @@
                 <div id="achievements-progress-bar" class="bg-amber-400 h-full w-0 transition-all duration-500"></div>
             </div>
 
-            <!-- Tab Switcher -->
+            <!-- Tab Switcher a 3 Schede -->
             <div class="flex border-b border-slate-200 bg-white">
-                <button id="tab-btn-tickets" onclick="switchPassportTab('tickets')" class="flex-1 py-3 text-xs font-black uppercase tracking-wider text-blue-600 border-b-2 border-blue-600">
-                    🎫 Carte d'Imbarco
+                <button id="tab-btn-profile" onclick="switchPassportTab('profile')" class="flex-1 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider text-blue-600 border-b-2 border-blue-600">
+                    👤 Identità
                 </button>
-                <button id="tab-btn-achievements" onclick="switchPassportTab('achievements')" class="flex-1 py-3 text-xs font-black uppercase tracking-wider text-slate-400 border-b-2 border-transparent hover:text-slate-600">
-                    🏆 30 Obiettivi
+                <button id="tab-btn-tickets" onclick="switchPassportTab('tickets')" class="flex-1 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400 border-b-2 border-transparent hover:text-slate-600">
+                    🎫 Voli
+                </button>
+                <button id="tab-btn-achievements" onclick="switchPassportTab('achievements')" class="flex-1 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400 border-b-2 border-transparent hover:text-slate-600">
+                    🏆 Obiettivi
                 </button>
             </div>
 
-            <!-- Contenuto Tab 1: Voli -->
-            <div id="tab-content-tickets" class="p-4 overflow-y-auto flex-1 bg-slate-100 space-y-3">
+            <!-- Contenuto Tab 1: Identità & Login (NUOVO) -->
+            <div id="tab-content-profile" class="p-4 md:p-6 overflow-y-auto flex-1 bg-slate-100 space-y-4 md:space-y-6">
+                <!-- Card Anagrafica -->
+                <div class="bg-white p-5 md:p-6 rounded-3xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-center gap-6">
+                    <!-- Foto Profilo Cliccabile -->
+                    <div class="relative group cursor-pointer flex-shrink-0" onclick="document.getElementById('avatar-upload').click()">
+                        <div class="w-24 h-24 rounded-full bg-blue-50 border-4 border-slate-100 shadow-md overflow-hidden flex items-center justify-center">
+                            <img id="profile-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=Focus" class="w-full h-full object-cover">
+                        </div>
+                        <div class="absolute inset-0 bg-slate-900/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                            <span class="text-white text-[10px] font-bold uppercase">Cambia</span>
+                        </div>
+                        <input type="file" id="avatar-upload" accept="image/*" class="hidden" onchange="loadAvatar(event)">
+                    </div>
+                    
+                    <!-- Campi Nome e Cognome -->
+                    <div class="flex-1 w-full space-y-3">
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Nome</label>
+                            <input type="text" id="profile-name" placeholder="Il tuo nome" class="w-full font-black text-xl text-slate-800 bg-transparent border-b-2 border-slate-200 focus:border-blue-500 focus:outline-none transition py-1" oninput="saveProfile()">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Cognome</label>
+                            <input type="text" id="profile-surname" placeholder="Il tuo cognome" class="w-full font-black text-xl text-slate-800 bg-transparent border-b-2 border-slate-200 focus:border-blue-500 focus:outline-none transition py-1" oninput="saveProfile()">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistiche Generali -->
+                <div class="grid grid-cols-2 gap-3 md:gap-4">
+                    <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-3xl p-5 text-white shadow-md">
+                        <p class="text-blue-100 text-[10px] uppercase font-bold tracking-wider mb-1">Voli Totali</p>
+                        <p class="text-4xl font-black" id="stat-flights">0</p>
+                    </div>
+                    <div class="bg-gradient-to-br from-amber-400 to-amber-500 rounded-3xl p-5 text-white shadow-md">
+                        <p class="text-amber-100 text-[10px] uppercase font-bold tracking-wider mb-1">Obiettivi</p>
+                        <p class="text-4xl font-black" id="stat-achievements">0</p>
+                    </div>
+                </div>
+                
+                <!-- Pulsante Login Cloud -->
+                <button id="btn-cloud-sync" onclick="initCloudAuth()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-4 rounded-2xl transition shadow-md flex items-center justify-center gap-2">
+                    ☁️ Connetti al Cloud
+                </button>
+            </div>
+
+            <!-- Contenuto Tab 2: Voli -->
+            <div id="tab-content-tickets" class="p-4 overflow-y-auto flex-1 bg-slate-100 space-y-3 hidden">
                 <div class="text-center text-slate-500 py-8 font-bold">Nessun volo registrato.</div>
             </div>
 
-            <!-- Contenuto Tab 2: Obiettivi (Griglia) -->
+            <!-- Contenuto Tab 3: Obiettivi -->
             <div id="tab-content-achievements" class="p-4 overflow-y-auto flex-1 bg-slate-100 hidden">
                 <div id="achievements-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
             </div>
-        </div>
-    </div>
 
     <!-- Moduli caricati nell'ordine corretto per non far sparire la mappa -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
