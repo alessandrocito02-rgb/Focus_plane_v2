@@ -260,13 +260,19 @@ async function completeFlight() {
     const today = new Date().toLocaleDateString('it-IT');
     const flightNum = "FP-" + Math.floor(Math.random() * 9000 + 1000);
     const durationTxt = document.getElementById('duration').options[document.getElementById('duration').selectedIndex].text;
-    
-    // CARICAMENTO METEO
+
+   // Mostra la scritta temporanea mentre attende la risposta
+    const weatherElem = document.getElementById('modal-weather');
+    if (weatherElem) weatherElem.innerText = "Scansione... 📡";
+
+    // Ottiene il meteo (da API o da riserva entro 3 sec max)
     let weatherString = "Meteo non disponibile";
     if (typeof getDestinationWeather === "function") {
-        document.getElementById('modal-weather').innerText = "Scansione... 📡";
         weatherString = await getDestinationWeather(currentArr.lat, currentArr.lng);
     }
+
+    // Aggiorna il testo con il risultato definitivo
+    if (weatherElem) weatherElem.innerText = weatherString;
 
     const newTicket = { 
         date: today, 
