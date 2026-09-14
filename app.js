@@ -66,7 +66,7 @@ function initMap() {
     map = L.map('map', { zoomControl: false }).setView([40.0, 10.0], 4);
     L.control.zoom({ position: 'topright' }).addTo(map);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('https://{s}[.basemaps.cartocdn.com/light_all/](https://.basemaps.cartocdn.com/light_all/){z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19
     }).addTo(map);
