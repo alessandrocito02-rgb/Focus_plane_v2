@@ -197,15 +197,6 @@ function updateDisplayState(elapsed, total) {
     if (fStatus) fStatus.innerText = phase;
 }
 
-    let phase = "A terra";
-    if (isRunning) {
-        if (percent < 10) phase = "Decollo";
-        else if (percent > 90) phase = "Atterraggio";
-        else phase = "In crociera";
-    }
-    if (fStatus) fStatus.innerText = phase;
-}
-
 function startFlight() {
     if (isRunning) return;
     
