@@ -190,15 +190,41 @@
         </div>
     </div>
 
-    <!-- Modale Passaporto -->
+<!-- Modale Passaporto con Obiettivi -->
     <div id="wallet-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col">
-            <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-3xl">
-                <h2 class="text-2xl font-black text-slate-800 flex items-center gap-2">🛂 Passaporto</h2>
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden">
+            <!-- Header Passaporto -->
+            <div class="p-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">🛂 Il tuo Passaporto</h2>
+                    <p class="text-xs text-slate-500 font-bold" id="achievements-progress-text">0 / 30 Sbloccati</p>
+                </div>
                 <button onclick="toggleWallet()" class="bg-slate-200 p-2 rounded-full text-slate-600 hover:bg-slate-300 font-bold">&times;</button>
             </div>
-            <div class="p-4 overflow-y-auto flex-1 bg-slate-100 space-y-3" id="wallet-list">
+
+            <!-- Barra di Avanzamento Obiettivi -->
+            <div class="w-full bg-slate-200 h-1.5">
+                <div id="achievements-progress-bar" class="bg-amber-400 h-full w-0 transition-all duration-500"></div>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="flex border-b border-slate-200 bg-white">
+                <button id="tab-btn-tickets" onclick="switchPassportTab('tickets')" class="flex-1 py-3 text-xs font-black uppercase tracking-wider text-blue-600 border-b-2 border-blue-600">
+                    🎫 Carte d'Imbarco
+                </button>
+                <button id="tab-btn-achievements" onclick="switchPassportTab('achievements')" class="flex-1 py-3 text-xs font-black uppercase tracking-wider text-slate-400 border-b-2 border-transparent hover:text-slate-600">
+                    🏆 30 Obiettivi
+                </button>
+            </div>
+
+            <!-- Contenuto Tab 1: Voli -->
+            <div id="tab-content-tickets" class="p-4 overflow-y-auto flex-1 bg-slate-100 space-y-3">
                 <div class="text-center text-slate-500 py-8 font-bold">Nessun volo registrato.</div>
+            </div>
+
+            <!-- Contenuto Tab 2: Obiettivi (Griglia) -->
+            <div id="tab-content-achievements" class="p-4 overflow-y-auto flex-1 bg-slate-100 hidden">
+                <div id="achievements-grid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
             </div>
         </div>
     </div>
@@ -209,6 +235,7 @@
     <script src="weather.js"></script>
     <script src="turbulence.js"></script>
     <script src="notifications.js"></script>
+    <script src="achievements.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
