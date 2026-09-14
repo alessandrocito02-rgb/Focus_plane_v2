@@ -360,17 +360,15 @@ function switchPassportTab(tab) {
     });
 }
 
-// AGGIORNATO: ORA RENDERIZZA I BIGLIETTI NELLA SCHEDA GIUSTA E CARICA GLI OBIETTIVI
 function renderWalletList() {
-    // Aggiorna gli obiettivi in background e il profilo
+    // Genera la lista degli obiettivi sbloccati/bloccati
     if (typeof renderAchievementsList === "function") {
         renderAchievementsList(myWallet);
     }
-    if (typeof updateProfileStats === 'function') {
+    if (typeof updateProfileStats === "function") {
         updateProfileStats();
     }
 
-    // Aggiorna la lista dei biglietti
     const list = document.getElementById('tab-content-tickets');
     if (!list) return;
 
