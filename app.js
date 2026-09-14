@@ -259,8 +259,8 @@ async function completeFlight() {
     const today = new Date().toLocaleDateString('it-IT');
     const flightNum = "FP-" + Math.floor(Math.random() * 9000 + 1000);
     const durationTxt = document.getElementById('duration').options[document.getElementById('duration').selectedIndex].text;
-
-   // Mostra la scritta temporanea mentre attende la risposta
+    
+    // Seleziona l'elemento del meteo una sola volta
     const weatherElem = document.getElementById('modal-weather');
     if (weatherElem) weatherElem.innerText = "Scansione... 📡";
 
@@ -270,7 +270,7 @@ async function completeFlight() {
         weatherString = await getDestinationWeather(currentArr.lat, currentArr.lng);
     }
 
-    // Aggiorna il testo con il risultato definitivo
+    // Aggiorna il testo con il risultato finale
     if (weatherElem) weatherElem.innerText = weatherString;
 
     const newTicket = { 
@@ -293,10 +293,6 @@ async function completeFlight() {
     document.getElementById('modal-arr').innerText = newTicket.arr.substring(0, 15);
     document.getElementById('modal-date').innerText = newTicket.date;
     document.getElementById('modal-duration').innerText = newTicket.duration;
-    
-    // STAMPA METEO SUL BIGLIETTO
-    const weatherElem = document.getElementById('modal-weather');
-    if (weatherElem) weatherElem.innerText = weatherString;
 
     const turbElement = document.getElementById('modal-turbulence');
     if (turbElement) {
