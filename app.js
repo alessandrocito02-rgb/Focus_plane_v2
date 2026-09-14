@@ -176,7 +176,6 @@ function updateDisplayState(elapsed, total) {
 function startFlight() {
     if (isRunning) return;
     
-    // Attiva il sensore turbolenze
     if (typeof startTurbulenceTracking === "function") startTurbulenceTracking();
 
     isRunning = true;
@@ -194,7 +193,6 @@ function startFlight() {
     if (elapsedMsAtPause === 0) flightTotalMs = parseInt(document.getElementById('duration').value) * 60 * 1000;
     flightStartTime = Date.now() - elapsedMsAtPause;
 
-    // PROGRAMMA NOTIFICA DI ATTERRAGGIO
     if (typeof scheduleLandingNotification === "function") {
         scheduleLandingNotification(flightTotalMs, currentDep.name, currentArr.name);
     }
@@ -316,4 +314,19 @@ function renderWalletList() {
     [...myWallet].reverse().forEach(ticket => {
         list.innerHTML += `
             <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-        
+                <div class="flex items-center gap-4">
+                    <div class="bg-blue-100 text-blue-600 p-3 rounded-xl font-bold font-mono">${ticket.flightNum}</div>
+                    <div>
+                        <p class="font-black text-slate-800">${ticket.dep} ➔ ${ticket.arr}</p>
+                        <p class="text-xs font-bold text-slate-400">${ticket.date} • Durata: ${ticket.duration}</p>
+                    </div>
+                </div>
+                <div class="text-emerald-500 bg-emerald-50 px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-black border border-emerald-200">
+                    Completato
+                </div>
+            </div>
+        `;
+    });
+}
+
+window.onload = initMap;
