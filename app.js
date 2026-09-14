@@ -1,4 +1,4 @@
-// app.js - Motore principale
+// app.js - Motore principale Focus on Plane (Versione Stabile Completa)
 
 let map, depMarker, arrMarker, planeMarker, routeLine;
 let animationFrameId;
@@ -27,23 +27,25 @@ function calculateBearing(startLat, startLng, destLat, destLng) {
 function populateDropdown(selectElement, airportList, selectedValue) {
     selectElement.innerHTML = '';
     const grouped = {};
-    zoneOrder.forEach(z => grouped[z] = []);
-    airportList.forEach(a => { if (grouped[a.zone]) grouped[a.zone].push(a); });
-    
-    zoneOrder.forEach(zone => {
-        if (grouped[zone] && grouped[zone].length > 0) {
-            grouped[zone].sort((a, b) => a.name.localeCompare(b.name));
-            const optgroup = document.createElement('optgroup');
-            optgroup.label = zone;
-            grouped[zone].forEach(a => {
-                const opt = document.createElement('option');
-                opt.value = a.name; opt.innerText = a.name;
-                if (a.name === selectedValue) opt.selected = true;
-                optgroup.appendChild(opt);
-            });
-            selectElement.appendChild(optgroup);
-        }
-    });
+    if (typeof zoneOrder !== 'undefined') {
+        zoneOrder.forEach(z => grouped[z] = []);
+        airportList.forEach(a => { if (grouped[a.zone]) grouped[a.zone].push(a); });
+        
+        zoneOrder.forEach(zone => {
+            if (grouped[zone] && grouped[zone].length > 0) {
+                grouped[zone].sort((a, b) => a.name.localeCompare(b.name));
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = zone;
+                grouped[zone].forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a.name; opt.innerText = a.name;
+                    if (a.name === selectedValue) opt.selected = true;
+                    optgroup.appendChild(opt);
+                });
+                selectElement.appendChild(optgroup);
+            }
+        });
+    }
 }
 
 function toggleDrawer() {
@@ -52,11 +54,11 @@ function toggleDrawer() {
     const miniBar = document.getElementById('mini-bar');
     
     if (isDrawerOpen) {
-        drawer.classList.remove('translate-y-full', 'md:-translate-x-[120%]');
-        miniBar.classList.add('translate-y-32');
+        if (drawer) drawer.classList.remove('translate-y-full', 'md:-translate-x-[120%]');
+        if (miniBar) miniBar.classList.add('translate-y-32');
     } else {
-        drawer.classList.add('translate-y-full', 'md:-translate-x-[120%]');
-        miniBar.classList.remove('translate-y-32');
+        if (drawer) drawer.classList.add('translate-y-full', 'md:-translate-x-[120%]');
+        if (miniBar) miniBar.classList.remove('translate-y-32');
     }
 }
 
@@ -66,11 +68,12 @@ function initMap() {
     map = L.map('map', { zoomControl: false }).setView([40.0, 10.0], 4);
     L.control.zoom({ position: 'topright' }).addTo(map);
 
+    // Tile Layer Gratuito e Stabile senza API Key
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19
     }).addTo(map);
-    
+
     updateDestinations();
     renderWalletList();
 }
@@ -111,9 +114,13 @@ function selectDestination() {
     currentArr = airports.find(a => a.name === document.getElementById('arrival').value);
     if(!currentArr) return;
 
-    document.getElementById('label-dep').innerText = currentDep.name;
-    document.getElementById('label-arr').innerText = currentArr.name;
-    document.getElementById('mini-route').innerText = currentDep.name + " ➔ " + currentArr.name;
+    const lblDep = document.getElementById('label-dep');
+    const lblArr = document.getElementById('label-arr');
+    const miniRoute = document.getElementById('mini-route');
+
+    if(lblDep) lblDep.innerText = currentDep.name;
+    if(lblArr) lblArr.innerText = currentArr.name;
+    if(miniRoute) miniRoute.innerText = currentDep.name + " ➔ " + currentArr.name;
     
     flightTotalMs = parseInt(document.getElementById('duration').value) * 60 * 1000;
     elapsedMsAtPause = 0;
@@ -150,12 +157,18 @@ function updateDisplayState(elapsed, total) {
     let remainingMs = Math.max(0, total - elapsed);
     const timeString = formatTime(remainingMs);
     
-    document.getElementById('timer-display').innerText = timeString;
-    document.getElementById('mini-timer').innerText = timeString;
+    const tDisplay = document.getElementById('timer-display');
+    const mTimer = document.getElementById('mini-timer');
+    const pBar = document.getElementById('progress-bar');
+    const mPBar = document.getElementById('mini-progress-bar');
+    const fStatus = document.getElementById('flight-status');
+
+    if (tDisplay) tDisplay.innerText = timeString;
+    if (mTimer) mTimer.innerText = timeString;
     
     let percent = total > 0 ? Math.min(100, Math.max(0, (elapsed / total) * 100)) : 0;
-    document.getElementById('progress-bar').style.width = `${percent}%`;
-    document.getElementById('mini-progress-bar').style.width = `${percent}%`;
+    if (pBar) pBar.style.width = `${percent}%`;
+    if (mPBar) mPBar.style.width = `${percent}%`;
 
     if (planeMarker && currentDep && currentArr) {
         const lat = currentDep.lat + (currentArr.lat - currentDep.lat) * (percent / 100);
@@ -169,7 +182,7 @@ function updateDisplayState(elapsed, total) {
         else if (percent > 90) phase = "Atterraggio";
         else phase = "In crociera";
     }
-    document.getElementById('flight-status').innerText = phase;
+    if (fStatus) fStatus.innerText = phase;
 }
 
 function startFlight() {
@@ -260,17 +273,14 @@ async function completeFlight() {
     const flightNum = "FP-" + Math.floor(Math.random() * 9000 + 1000);
     const durationTxt = document.getElementById('duration').options[document.getElementById('duration').selectedIndex].text;
     
-    // Seleziona l'elemento del meteo una sola volta
     const weatherElem = document.getElementById('modal-weather');
     if (weatherElem) weatherElem.innerText = "Scansione... 📡";
 
-    // Ottiene il meteo (da API o da riserva entro 3 sec max)
     let weatherString = "Meteo non disponibile";
     if (typeof getDestinationWeather === "function") {
         weatherString = await getDestinationWeather(currentArr.lat, currentArr.lng);
     }
 
-    // Aggiorna il testo con il risultato finale
     if (weatherElem) weatherElem.innerText = weatherString;
 
     const newTicket = { 
@@ -316,12 +326,12 @@ function closeTicketAndSave() {
 
 function toggleWallet() {
     const modal = document.getElementById('wallet-modal');
-    modal.classList.toggle('hidden');
+    if (modal) modal.classList.toggle('hidden');
 }
 
 function renderWalletList() {
     const list = document.getElementById('wallet-list');
-    if (myWallet.length === 0) return;
+    if (!list || myWallet.length === 0) return;
     
     list.innerHTML = '';
     [...myWallet].reverse().forEach(ticket => {
@@ -331,7 +341,7 @@ function renderWalletList() {
                     <div class="bg-blue-100 text-blue-600 p-3 rounded-xl font-bold font-mono">${ticket.flightNum}</div>
                     <div>
                         <p class="font-black text-slate-800">${ticket.dep} ➔ ${ticket.arr}</p>
-                        <p class="text-xs font-bold text-slate-400">${ticket.date} • Durata: ${ticket.duration}</p>
+                        <p class="text-xs font-bold text-slate-400">${ticket.date} • Durata: ${ticket.duration} • ${ticket.weather || ''}</p>
                     </div>
                 </div>
                 <div class="text-emerald-500 bg-emerald-50 px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-black border border-emerald-200">
