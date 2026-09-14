@@ -246,7 +246,7 @@ function resetFlight() {
     updateDestinations();
 }
 
-function completeFlight() {
+async function completeFlight() {
     isRunning = false;
     isPaused = false;
     cancelAnimationFrame(animationFrameId);
@@ -261,12 +261,20 @@ function completeFlight() {
     const flightNum = "FP-" + Math.floor(Math.random() * 9000 + 1000);
     const durationTxt = document.getElementById('duration').options[document.getElementById('duration').selectedIndex].text;
     
+    // CARICAMENTO METEO
+    let weatherString = "Meteo non disponibile";
+    if (typeof getDestinationWeather === "function") {
+        document.getElementById('modal-weather').innerText = "Scansione... 📡";
+        weatherString = await getDestinationWeather(currentArr.lat, currentArr.lng);
+    }
+
     const newTicket = { 
         date: today, 
         flightNum: flightNum, 
         dep: currentDep.name, 
         arr: currentArr.name, 
         duration: durationTxt, 
+        weather: weatherString,
         turbulence: turbulenceReport.text 
     };
 
@@ -281,6 +289,10 @@ function completeFlight() {
     document.getElementById('modal-date').innerText = newTicket.date;
     document.getElementById('modal-duration').innerText = newTicket.duration;
     
+    // STAMPA METEO SUL BIGLIETTO
+    const weatherElem = document.getElementById('modal-weather');
+    if (weatherElem) weatherElem.innerText = weatherString;
+
     const turbElement = document.getElementById('modal-turbulence');
     if (turbElement) {
         turbElement.innerText = turbulenceReport.text;
