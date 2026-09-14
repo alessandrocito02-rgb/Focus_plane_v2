@@ -169,7 +169,6 @@ function updateDisplayState(elapsed, total) {
     if (pBar) pBar.style.width = `${percent}%`;
     if (mPBar) mPBar.style.width = `${percent}%`;
 
-    // Aggiornamento Distanza in KM
     if (currentDep && currentArr) {
         const totalKm = calculateDistance(currentDep.lat, currentDep.lng, currentArr.lat, currentArr.lng);
         const remainingKm = Math.max(0, Math.round(totalKm * (1 - percent / 100)));
