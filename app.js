@@ -363,8 +363,7 @@ function switchPassportTab(tab) {
 // AGGIORNATO: ORA RENDERIZZA I BIGLIETTI NELLA SCHEDA GIUSTA E CARICA GLI OBIETTIVI
 function renderWalletList() {
     // Aggiorna gli obiettivi in background
-    if (typeof renderAchievementsList === "function") {
-        renderAchievementsList(myWallet);
+    if (typeof updateProfileStats === 'function') updateProfileStats();
     }
 
     // Aggiorna la lista dei biglietti
