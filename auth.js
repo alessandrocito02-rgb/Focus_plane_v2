@@ -8,21 +8,18 @@ function loadProfile() {
 
     if (savedName) document.getElementById('profile-name').value = savedName;
     if (savedSurname) document.getElementById('profile-surname').value = savedSurname;
-    if (savedAvatar) document.getElementById('profile-avatar').src = savedAvatar;
+    
+    if (savedAvatar) {
+        document.getElementById('profile-avatar').src = savedAvatar;
+        // Aggiorna anche l'icona in alto a destra
+        const headerAvatar = document.getElementById('header-avatar');
+        if (headerAvatar) headerAvatar.src = savedAvatar;
+    }
     
     updateProfileStats();
 }
 
-// Salva i dati testuali quando scrivi
-function saveProfile() {
-    const name = document.getElementById('profile-name').value;
-    const surname = document.getElementById('profile-surname').value;
-    
-    localStorage.setItem('fp_userName', name);
-    localStorage.setItem('fp_userSurname', surname);
-}
-
-// Converte l'immagine in Base64 per salvarla nel Passaporto
+// Converte l'immagine per salvarla nel Passaporto e nell'Header
 function loadAvatar(event) {
     const file = event.target.files[0];
     if (file) {
@@ -30,6 +27,11 @@ function loadAvatar(event) {
         reader.onload = function(e) {
             const imageData = e.target.result;
             document.getElementById('profile-avatar').src = imageData;
+            
+            // Aggiorna in tempo reale anche l'icona in alto a destra
+            const headerAvatar = document.getElementById('header-avatar');
+            if (headerAvatar) headerAvatar.src = imageData;
+            
             localStorage.setItem('fp_userAvatar', imageData);
         };
         reader.readAsDataURL(file);
