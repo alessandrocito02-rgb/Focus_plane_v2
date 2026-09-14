@@ -7,6 +7,7 @@ let isRunning = false, isPaused = false;
 let currentDep = null, currentArr = null;
 let isDrawerOpen = true;
 
+// RECUPERO BIGLIETTI SALVATI (I TUOI VOLI SONO AL SICURO QUI)
 let myWallet = JSON.parse(localStorage.getItem('flightFocusTickets')) || [];
 let savedCity = localStorage.getItem('flightFocusCurrentCity') || "Ancona AOI";
 
@@ -339,14 +340,48 @@ function toggleWallet() {
     if (modal) modal.classList.toggle('hidden');
 }
 
+// NUOVO: LOGICA CAMBIO SCHEDE PASSAPORTO (BIGLIETTI VS OBIETTIVI)
+function switchPassportTab(tab) {
+    const btnTickets = document.getElementById('tab-btn-tickets');
+    const btnAch = document.getElementById('tab-btn-achievements');
+    const tabTickets = document.getElementById('tab-content-tickets');
+    const tabAch = document.getElementById('tab-content-achievements');
+
+    if (!btnTickets || !btnAch || !tabTickets || !tabAch) return;
+
+    if (tab === 'tickets') {
+        btnTickets.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider text-blue-600 border-b-2 border-blue-600";
+        btnAch.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider text-slate-400 border-b-2 border-transparent hover:text-slate-600";
+        tabTickets.classList.remove('hidden');
+        tabAch.classList.add('hidden');
+    } else {
+        btnAch.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider text-amber-500 border-b-2 border-amber-500";
+        btnTickets.className = "flex-1 py-3 text-xs font-black uppercase tracking-wider text-slate-400 border-b-2 border-transparent hover:text-slate-600";
+        tabAch.classList.remove('hidden');
+        tabTickets.classList.add('hidden');
+    }
+}
+
+// AGGIORNATO: ORA RENDERIZZA I BIGLIETTI NELLA SCHEDA GIUSTA E CARICA GLI OBIETTIVI
 function renderWalletList() {
-    const list = document.getElementById('wallet-list');
-    if (!list || myWallet.length === 0) return;
+    // Aggiorna gli obiettivi in background
+    if (typeof renderAchievementsList === "function") {
+        renderAchievementsList(myWallet);
+    }
+
+    // Aggiorna la lista dei biglietti
+    const list = document.getElementById('tab-content-tickets');
+    if (!list) return;
+
+    if (myWallet.length === 0) {
+        list.innerHTML = '<div class="text-center text-slate-500 py-8 font-bold">Nessun volo registrato. Inizia la tua prima sessione!</div>';
+        return;
+    }
     
     list.innerHTML = '';
     [...myWallet].reverse().forEach(ticket => {
         list.innerHTML += `
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-3">
                 <div class="flex items-center gap-4">
                     <div class="bg-blue-100 text-blue-600 p-3 rounded-xl font-bold font-mono">${ticket.flightNum}</div>
                     <div>
