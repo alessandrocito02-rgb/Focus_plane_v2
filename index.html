@@ -32,7 +32,10 @@
     <div id="mini-bar" onclick="toggleDrawer()" class="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 bg-white/95 backdrop-blur-xl border border-slate-200 z-20 p-4 rounded-2xl shadow-xl transition-all duration-500 transform translate-y-32 cursor-pointer hover:bg-slate-50">
         <div class="flex justify-between items-center mb-2">
             <span class="font-bold text-slate-700 text-sm truncate pr-2" id="mini-route">Preparazione...</span>
-            <span class="font-mono font-bold text-blue-600 text-lg" id="mini-timer">25:00</span>
+            <div class="text-right">
+                <span class="font-mono font-bold text-blue-600 text-lg block leading-none" id="mini-timer">25:00</span>
+                <span class="font-mono text-[10px] font-bold text-slate-400" id="mini-distance">0 km</span>
+            </div>
         </div>
         <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden shadow-inner">
             <div id="mini-progress-bar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full w-0"></div>
@@ -71,6 +74,11 @@
                     <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full transition-all duration-75 w-0 shadow-md"></div>
                 </div>
                 <div id="timer-display" class="text-7xl font-black tracking-tighter text-slate-800 text-center font-mono py-2">25:00</div>
+            <!-- NUOVA RIGA DISTANZA RIMANENTE -->
+                <div class="text-center mt-1">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Mancano all'arrivo:</span>
+                    <span id="distance-display" class="text-sm font-black text-blue-600 font-mono ml-1">0 km</span>
+                </div>
             </div>
 
             <!-- Controlli Volo -->
