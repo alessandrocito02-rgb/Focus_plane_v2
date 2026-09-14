@@ -170,11 +170,32 @@ function updateDisplayState(elapsed, total) {
     if (pBar) pBar.style.width = `${percent}%`;
     if (mPBar) mPBar.style.width = `${percent}%`;
 
+    // CALCOLO E AGGIORNAMENTO DISTANZA RIMANENTE IN KM
+    if (currentDep && currentArr) {
+        const totalKm = calculateDistance(currentDep.lat, currentDep.lng, currentArr.lat, currentArr.lng);
+        const remainingKm = Math.max(0, Math.round(totalKm * (1 - percent / 100)));
+        
+        const distDisplay = document.getElementById('distance-display');
+        const miniDist = document.getElementById('mini-distance');
+        
+        if (distDisplay) distDisplay.innerText = `${remainingKm.toLocaleString('it-IT')} km`;
+        if (miniDist) miniDist.innerText = `${remainingKm.toLocaleString('it-IT')} km`;
+    }
+
     if (planeMarker && currentDep && currentArr) {
         const lat = currentDep.lat + (currentArr.lat - currentDep.lat) * (percent / 100);
         const lng = currentDep.lng + (currentArr.lng - currentDep.lng) * (percent / 100);
         planeMarker.setLatLng([lat, lng]);
     }
+
+    let phase = "A terra";
+    if (isRunning) {
+        if (percent < 10) phase = "Decollo";
+        else if (percent > 90) phase = "Atterraggio";
+        else phase = "In crociera";
+    }
+    if (fStatus) fStatus.innerText = phase;
+}
 
     let phase = "A terra";
     if (isRunning) {
