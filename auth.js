@@ -1,27 +1,17 @@
 // auth.js - Gestione Identità, Login e Passaporto Sfocato
+
 window.isRegisterMode = false;
-let isRegisterMode = false;
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364748b'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
-// Controlla se c'è un utente loggato all'apertura dell'app
-function checkAuthStatus() {
-    const userJson = localStorage.getItem('fp_currentUser');
-    if (userJson) {
-        const user = JSON.parse(userJson);
-        unlockPassport(user);
-    } else {
-        lockPassport();
-    }
-    updateProfileStats();
-}
-
-// Passa dalla modalità "Login" a "Registrazione"
-function toggleAuthMode() {
+// Passa dalla modalità "Login" a "Registrazione" (Forzata globalmente)
+window.toggleAuthMode = function() {
     window.isRegisterMode = !window.isRegisterMode;
     const title = document.getElementById('auth-title');
     const btn = document.getElementById('auth-submit-btn');
     const switchText = document.getElementById('auth-switch-text');
     const registerFields = document.getElementById('auth-register-fields');
+
+    if (!title || !btn || !switchText || !registerFields) return;
 
     if (window.isRegisterMode) {
         title.innerText = "Registrazione";
@@ -34,10 +24,22 @@ function toggleAuthMode() {
         switchText.innerText = "Richiedi un Passaporto (Registrati)";
         registerFields.classList.add('hidden');
     }
+};
+
+// Controlla se c'è un utente loggato all'apertura dell'app
+function checkAuthStatus() {
+    const userJson = localStorage.getItem('fp_currentUser');
+    if (userJson) {
+        const user = JSON.parse(userJson);
+        unlockPassport(user);
+    } else {
+        lockPassport();
+    }
+    if (typeof updateProfileStats === 'function') updateProfileStats();
 }
 
 // Gestisce il click sul pulsante Accedi/Registrati
-function handleAuthSubmit() {
+window.handleAuthSubmit = function() {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value.trim();
 
@@ -46,7 +48,7 @@ function handleAuthSubmit() {
         return;
     }
 
-    if (isRegisterMode) {
+    if (window.isRegisterMode) {
         const name = document.getElementById('auth-name').value.trim();
         const surname = document.getElementById('auth-surname').value.trim();
         
@@ -57,7 +59,7 @@ function handleAuthSubmit() {
 
         const newUser = { email, password, name, surname, avatar: DEFAULT_AVATAR };
         
-        // Simulazione salvataggio su Cloud (per ora in localStorage)
+        // Salvataggio locale in attesa del cloud
         localStorage.setItem(`fp_user_${email}`, JSON.stringify(newUser));
         localStorage.setItem('fp_currentUser', JSON.stringify(newUser));
         unlockPassport(newUser);
@@ -77,28 +79,25 @@ function handleAuthSubmit() {
             alert("Nessun passaporto trovato con questa email. Registrati.");
         }
     }
-}
+};
 
 // Sblocca il passaporto, rimuove la sfocatura e popola i dati
 function unlockPassport(user) {
-    // Nascondi il pannello di login
     const overlay = document.getElementById('auth-overlay');
     if(overlay) overlay.classList.add('hidden');
 
-    // Rimuovi la sfocatura e attiva l'interazione
     const passportData = document.getElementById('passport-data-container');
     if(passportData) {
         passportData.classList.remove('blur-md', 'pointer-events-none', 'opacity-40');
         passportData.classList.add('opacity-100');
     }
 
-    // Popola i campi
     document.getElementById('profile-name-display').value = user.name || "";
     document.getElementById('profile-surname-display').value = user.surname || "";
     
-    // Gestione Avatar
     const avatarImg = document.getElementById('profile-avatar');
     const headerImg = document.getElementById('header-avatar');
+    
     if (user.avatar) {
         if(avatarImg) avatarImg.src = user.avatar;
         if(headerImg) headerImg.src = user.avatar;
@@ -107,7 +106,6 @@ function unlockPassport(user) {
         if(headerImg) headerImg.src = DEFAULT_AVATAR;
     }
     
-    // Rendi i campi modificabili
     document.getElementById('profile-name-display').readOnly = false;
     document.getElementById('profile-surname-display').readOnly = false;
 }
@@ -123,21 +121,20 @@ function lockPassport() {
         passportData.classList.remove('opacity-100');
     }
     
-    // Resetta l'icona in alto a destra
     const headerImg = document.getElementById('header-avatar');
     if (headerImg) headerImg.src = DEFAULT_AVATAR;
 }
 
-function logout() {
+// Esce dall'account
+window.logout = function() {
     localStorage.removeItem('fp_currentUser');
-    // Svuota i campi del login
     document.getElementById('auth-email').value = "";
     document.getElementById('auth-password').value = "";
     lockPassport();
-}
+};
 
-// Se l'utente loggato modifica nome/cognome nel passaporto
-function updateUserData() {
+// Modifica nome/cognome nel passaporto
+window.updateUserData = function() {
     const userJson = localStorage.getItem('fp_currentUser');
     if (!userJson) return;
     
@@ -147,9 +144,10 @@ function updateUserData() {
     
     localStorage.setItem('fp_currentUser', JSON.stringify(user));
     localStorage.setItem(`fp_user_${user.email}`, JSON.stringify(user));
-}
+};
 
-function loadAvatar(event) {
+// Carica la foto
+window.loadAvatar = function(event) {
     const file = event.target.files[0];
     const userJson = localStorage.getItem('fp_currentUser');
     if (!file || !userJson) return;
@@ -169,17 +167,6 @@ function loadAvatar(event) {
         localStorage.setItem(`fp_user_${user.email}`, JSON.stringify(user));
     };
     reader.readAsDataURL(file);
-}
+};
 
-function updateProfileStats() {
-    if (typeof myWallet !== 'undefined') {
-        document.getElementById('stat-flights').innerText = myWallet.length;
-        if (typeof checkAchievements === 'function') {
-            const unlocked = checkAchievements(myWallet);
-            document.getElementById('stat-achievements').innerText = unlocked.size;
-        }
-    }
-}
-
-// Inizializza il controllo all'apertura
 window.addEventListener('load', checkAuthStatus);
