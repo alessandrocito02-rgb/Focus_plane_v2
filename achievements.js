@@ -105,14 +105,14 @@ container.innerHTML = '';
     ACHIEVEMENTS_LIST.forEach(ach => {
         const isUnlocked = unlocked.has(ach.id);
         container.innerHTML += `
-            <div class="p-3 rounded-2xl border ${isUnlocked ? 'bg-amber-50/60 border-amber-200' : 'bg-slate-50 border-slate-200'} flex items-center gap-3 transition">
-                <div class="text-3xl p-2 rounded-xl ${isUnlocked ? 'bg-amber-100' : 'bg-slate-200 grayscale'}">${ach.icon}</div>
+            <div class="p-3 rounded-xl border-2 ${isUnlocked ? 'bg-white border-slate-800 shadow-sm' : 'bg-transparent border-dashed border-slate-300'} flex items-center gap-3 transition duration-300">
+                <div class="text-3xl p-2 rounded-full ${isUnlocked ? 'bg-slate-100' : 'grayscale opacity-40'}">${ach.icon}</div>
                 <div class="flex-1 min-w-0">
-                    <p class="font-black text-xs ${isUnlocked ? 'text-amber-900' : 'text-slate-800'} truncate">${ach.name}</p>
-                    <p class="text-[10px] ${isUnlocked ? 'text-amber-700' : 'text-slate-600'} font-medium leading-tight">${ach.desc}</p>
+                    <p class="font-black text-[11px] ${isUnlocked ? 'text-slate-800' : 'text-slate-500'} truncate uppercase tracking-widest">${ach.name}</p>
+                    <p class="text-[9px] ${isUnlocked ? 'text-slate-600' : 'text-slate-400'} font-medium leading-tight mt-0.5">${ach.desc}</p>
                 </div>
-                <div class="text-xs font-bold ${isUnlocked ? 'text-amber-600' : 'text-slate-400'}">
-                    ${isUnlocked ? '🔓' : '🔒'}
+                <div class="text-lg ${isUnlocked ? 'text-slate-800' : 'text-slate-300'}">
+                    ${isUnlocked ? '✔️' : '🔒'}
                 </div>
             </div>
         `;
