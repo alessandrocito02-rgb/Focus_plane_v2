@@ -7,7 +7,7 @@ let isRunning = false, isPaused = false;
 let currentDep = null, currentArr = null;
 let isDrawerOpen = true;
 
-// RECUPERO BIGLIETTI SALVATI (I TUOI VOLI SONO AL SICURO QUI)
+// RECUPERO BIGLIETTI SALVATI
 let myWallet = JSON.parse(localStorage.getItem('flightFocusTickets')) || [];
 let savedCity = localStorage.getItem('flightFocusCurrentCity') || "Ancona AOI";
 
@@ -340,7 +340,7 @@ function toggleWallet() {
     if (modal) modal.classList.toggle('hidden');
 }
 
-// NUOVO: LOGICA CAMBIO SCHEDE PASSAPORTO A 3 TAB
+// LOGICA CAMBIO SCHEDE PASSAPORTO A 3 TAB (CON STILE RESTYLING)
 function switchPassportTab(tab) {
     const tabs = ['profile', 'tickets', 'achievements'];
     
@@ -350,18 +350,17 @@ function switchPassportTab(tab) {
         if (!btn || !content) return;
         
         if (t === tab) {
-            btn.className = "flex-1 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider border-b-2 text-blue-600 border-blue-600";
-            if(t === 'achievements') btn.className = btn.className.replace('text-blue-600', 'text-amber-500').replace('border-blue-600', 'border-amber-500');
+            btn.className = "flex-1 py-3.5 text-[10px] sm:text-xs font-black uppercase tracking-widest border-b-4 text-slate-800 border-slate-800 transition-colors";
             content.classList.remove('hidden');
         } else {
-            btn.className = "flex-1 py-3 text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-400 border-b-2 border-transparent hover:text-slate-600";
+            btn.className = "flex-1 py-3.5 text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 border-b-4 border-transparent hover:text-slate-600 transition-colors";
             content.classList.add('hidden');
         }
     });
 }
 
+// RENDERIZZA LA LISTA CON LO STILE "VISTO/TIMBRO SU CARTA"
 function renderWalletList() {
-    // Genera la lista degli obiettivi sbloccati/bloccati
     if (typeof renderAchievementsList === "function") {
         renderAchievementsList(myWallet);
     }
@@ -373,30 +372,34 @@ function renderWalletList() {
     if (!list) return;
 
     if (myWallet.length === 0) {
-        list.innerHTML = '<div class="text-center text-slate-500 py-8 font-bold">Nessun volo registrato. Inizia la tua prima sessione!</div>';
+        list.innerHTML = '<div class="text-center text-slate-400 py-10 font-mono text-sm uppercase tracking-widest">Nessun timbro presente.<br>Effettua il primo volo.</div>';
         return;
     }
     
     list.innerHTML = '';
     [...myWallet].reverse().forEach(ticket => {
         list.innerHTML += `
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-3">
-                <div class="flex items-center gap-4">
-                    <div class="bg-blue-100 text-blue-600 p-3 rounded-xl font-bold font-mono">${ticket.flightNum}</div>
+            <div class="bg-white/70 p-4 rounded-xl shadow-sm border-2 border-dashed border-slate-300 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 mb-3 relative overflow-hidden">
+                
+                <!-- Timbro di sfondo -->
+                <div class="absolute -right-4 -bottom-6 text-7xl opacity-5 -rotate-12 pointer-events-none">🛂</div>
+                
+                <div class="flex items-center gap-4 relative z-10">
+                    <div class="text-slate-800 font-black font-mono text-xl w-16 text-center border-r-2 border-slate-200 pr-4">${ticket.flightNum.replace('FP-','')}</div>
                     <div>
-                        <p class="font-black text-slate-800">${ticket.dep} ➔ ${ticket.arr}</p>
-                        <p class="text-xs font-bold text-slate-400">${ticket.date} • Durata: ${ticket.duration} • ${ticket.weather || ''}</p>
+                        <p class="font-black text-slate-800 tracking-widest uppercase">${ticket.dep} ➔ ${ticket.arr}</p>
+                        <p class="text-[9px] font-bold text-slate-500 font-mono uppercase mt-1 tracking-wider">${ticket.date} • ${ticket.duration} • ${ticket.weather || ''}</p>
                     </div>
                 </div>
-                <div class="text-emerald-500 bg-emerald-50 px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-black border border-emerald-200">
-                    Completato
+                <div class="text-slate-700 bg-slate-200/50 px-3 py-1 rounded-sm text-[9px] uppercase tracking-widest font-black border border-slate-300 relative z-10 shadow-sm">
+                    Timbrato
                 </div>
             </div>
         `;
     });
 }
 
-// NUOVO: Funzione per rendere l'icona del profilo trascinabile e salvarne la posizione
+// LOGICA PER L'ICONA TRASCINABILE
 function makeDraggable() {
     const btn = document.getElementById('profile-btn');
     if (!btn) return;
@@ -405,12 +408,11 @@ function makeDraggable() {
     let startX, startY, initialX, initialY;
     let moved = false;
 
-    // 1. Recupera la posizione salvata dal localStorage
     const savedPos = JSON.parse(localStorage.getItem('fp_iconPosition'));
     if (savedPos) {
         btn.style.left = savedPos.x + 'px';
         btn.style.top = savedPos.y + 'px';
-        btn.style.right = 'auto'; // Rimuove l'ancoraggio a destra di default
+        btn.style.right = 'auto'; 
     }
 
     function dragStart(e) {
@@ -428,7 +430,7 @@ function makeDraggable() {
         
         isDragging = true;
         moved = false;
-        btn.style.transition = 'none'; // Disabilita animazioni per un drag fluido
+        btn.style.transition = 'none';
     }
 
     function drag(e) {
@@ -446,17 +448,15 @@ function makeDraggable() {
         const dx = currentX - startX;
         const dy = currentY - startY;
 
-        // Se il movimento è maggiore di 5 pixel, lo consideriamo un trascinamento e non un click
         if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
             moved = true;
         }
 
         if (moved) {
-            e.preventDefault(); // Evita scroll accidentali dello schermo
+            e.preventDefault(); 
             let newX = initialX + dx;
             let newY = initialY + dy;
 
-            // Mantiene l'icona dentro i bordi dello schermo
             const maxX = window.innerWidth - btn.offsetWidth;
             const maxY = window.innerHeight - btn.offsetHeight;
             newX = Math.max(0, Math.min(newX, maxX));
@@ -474,28 +474,25 @@ function makeDraggable() {
         btn.style.transition = 'all 0.2s'; 
 
         if (moved) {
-            // Se è stata trascinata, salva la nuova posizione in memoria
             localStorage.setItem('fp_iconPosition', JSON.stringify({
                 x: parseInt(btn.style.left),
                 y: parseInt(btn.style.top)
             }));
         } else {
-            // Se non c'è stato movimento, è un semplice click: apri il passaporto
             toggleWallet();
         }
     }
 
-    // Eventi per il Mouse (Desktop)
     btn.addEventListener('mousedown', dragStart);
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', dragEnd);
 
-    // Eventi per il Touch (Mobile/Smartphone)
     btn.addEventListener('touchstart', dragStart, { passive: false });
     document.addEventListener('touchmove', drag, { passive: false });
     document.addEventListener('touchend', dragEnd);
 }
 
+// Inizializza tutto all'avvio
 window.onload = () => {
     initMap();
     makeDraggable();
