@@ -396,4 +396,107 @@ function renderWalletList() {
     });
 }
 
-window.onload = initMap;
+// NUOVO: Funzione per rendere l'icona del profilo trascinabile e salvarne la posizione
+function makeDraggable() {
+    const btn = document.getElementById('profile-btn');
+    if (!btn) return;
+
+    let isDragging = false;
+    let startX, startY, initialX, initialY;
+    let moved = false;
+
+    // 1. Recupera la posizione salvata dal localStorage
+    const savedPos = JSON.parse(localStorage.getItem('fp_iconPosition'));
+    if (savedPos) {
+        btn.style.left = savedPos.x + 'px';
+        btn.style.top = savedPos.y + 'px';
+        btn.style.right = 'auto'; // Rimuove l'ancoraggio a destra di default
+    }
+
+    function dragStart(e) {
+        if (e.type === 'touchstart') {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        } else {
+            startX = e.clientX;
+            startY = e.clientY;
+        }
+        
+        const rect = btn.getBoundingClientRect();
+        initialX = rect.left;
+        initialY = rect.top;
+        
+        isDragging = true;
+        moved = false;
+        btn.style.transition = 'none'; // Disabilita animazioni per un drag fluido
+    }
+
+    function drag(e) {
+        if (!isDragging) return;
+        
+        let currentX, currentY;
+        if (e.type === 'touchmove') {
+            currentX = e.touches[0].clientX;
+            currentY = e.touches[0].clientY;
+        } else {
+            currentX = e.clientX;
+            currentY = e.clientY;
+        }
+
+        const dx = currentX - startX;
+        const dy = currentY - startY;
+
+        // Se il movimento è maggiore di 5 pixel, lo consideriamo un trascinamento e non un click
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            moved = true;
+        }
+
+        if (moved) {
+            e.preventDefault(); // Evita scroll accidentali dello schermo
+            let newX = initialX + dx;
+            let newY = initialY + dy;
+
+            // Mantiene l'icona dentro i bordi dello schermo
+            const maxX = window.innerWidth - btn.offsetWidth;
+            const maxY = window.innerHeight - btn.offsetHeight;
+            newX = Math.max(0, Math.min(newX, maxX));
+            newY = Math.max(0, Math.min(newY, maxY));
+
+            btn.style.left = newX + 'px';
+            btn.style.top = newY + 'px';
+            btn.style.right = 'auto';
+        }
+    }
+
+    function dragEnd(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        btn.style.transition = 'all 0.2s'; 
+
+        if (moved) {
+            // Se è stata trascinata, salva la nuova posizione in memoria
+            localStorage.setItem('fp_iconPosition', JSON.stringify({
+                x: parseInt(btn.style.left),
+                y: parseInt(btn.style.top)
+            }));
+        } else {
+            // Se non c'è stato movimento, è un semplice click: apri il passaporto
+            toggleWallet();
+        }
+    }
+
+    // Eventi per il Mouse (Desktop)
+    btn.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+
+    // Eventi per il Touch (Mobile/Smartphone)
+    btn.addEventListener('touchstart', dragStart, { passive: false });
+    document.addEventListener('touchmove', drag, { passive: false });
+    document.addEventListener('touchend', dragEnd);
+}
+
+window.onload = () => {
+    initMap();
+    makeDraggable();
+};
