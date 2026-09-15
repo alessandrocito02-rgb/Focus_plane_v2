@@ -28,10 +28,10 @@
     <!-- Mappa a schermo intero -->
     <div id="map"></div>
 
-    <!-- NUOVO: Pulsante Profilo In Alto a Destra -->
-    <button onclick="toggleWallet()" class="absolute top-4 right-4 z-20 w-12 h-12 rounded-full bg-white border-2 border-slate-200 hover:border-blue-500 overflow-hidden transition shadow-lg flex items-center justify-center">
+    <!-- Pulsante Profilo Trascinabile In Alto a Destra -->
+    <button id="profile-btn" class="absolute z-20 w-12 h-12 rounded-full bg-white border-2 border-slate-200 hover:border-blue-500 overflow-hidden shadow-lg flex items-center justify-center cursor-move" style="top: 16px; right: 16px; touch-action: none;">
         <!-- Immagine di default: silhouette grigia -->
-        <img id="header-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" class="w-full h-full object-cover">
+        <img id="header-avatar" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2394a3b8'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E" class="w-full h-full object-cover pointer-events-none">
     </button>
 
     <!-- Mini-Barra di Volo -->
@@ -80,7 +80,7 @@
                     <div id="progress-bar" class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full transition-all duration-75 w-0 shadow-md"></div>
                 </div>
                 <div id="timer-display" class="text-7xl font-black tracking-tighter text-slate-800 text-center font-mono py-2">25:00</div>
-            <!-- NUOVA RIGA DISTANZA RIMANENTE -->
+            <!-- RIGA DISTANZA RIMANENTE -->
                 <div class="text-center mt-1">
                     <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Mancano all'arrivo:</span>
                     <span id="distance-display" class="text-sm font-black text-blue-600 font-mono ml-1">0 km</span>
