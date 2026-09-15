@@ -1,9 +1,26 @@
-// auth.js - Gestione Identità, Login e Passaporto Sfocato
+// auth.js - Gestione Cloud Firebase, Login e Passaporto Sfocato
+
+// Configurazione Firebase dal tuo progetto
+const firebaseConfig = {
+    apiKey: "AIzaSyCVznKpkC6aub72EfaAkKGr4G6a099Lu-Q",
+    authDomain: "focus-plane-ef044.firebaseapp.com",
+    projectId: "focus-plane-ef044",
+    storageBucket: "focus-plane-ef044.firebasestorage.app",
+    messagingSenderId: "408825981588",
+    appId: "1:408825981588:web:de537d8ddd9c87cde42281"
+};
+
+// Inizializzazione Firebase
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 window.isRegisterMode = false;
 const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364748b'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
-// Passa dalla modalità "Login" a "Registrazione" (Forzata globalmente)
+// Passa dalla modalità Login a Registrazione
 window.toggleAuthMode = function() {
     window.isRegisterMode = !window.isRegisterMode;
     const title = document.getElementById('auth-title');
@@ -14,8 +31,8 @@ window.toggleAuthMode = function() {
     if (!title || !btn || !switchText || !registerFields) return;
 
     if (window.isRegisterMode) {
-        title.innerText = "Registrazione";
-        btn.innerText = "Emetti Passaporto";
+        title.innerText = "Registrazione Cloud";
+        btn.innerText = "Crea Passaporto Cloud";
         switchText.innerText = "Hai già un passaporto? Accedi";
         registerFields.classList.remove('hidden');
     } else {
@@ -26,62 +43,71 @@ window.toggleAuthMode = function() {
     }
 };
 
-// Controlla se c'è un utente loggato all'apertura dell'app
-function checkAuthStatus() {
-    const userJson = localStorage.getItem('fp_currentUser');
-    if (userJson) {
-        const user = JSON.parse(userJson);
-        unlockPassport(user);
-    } else {
-        lockPassport();
-    }
-    if (typeof updateProfileStats === 'function') updateProfileStats();
-}
-
-// Gestisce il click sul pulsante Accedi/Registrati
-window.handleAuthSubmit = function() {
+// Gestisce il Login o la Registrazione reale su Firebase
+window.handleAuthSubmit = async function() {
     const email = document.getElementById('auth-email').value.trim();
     const password = document.getElementById('auth-password').value.trim();
+    const btn = document.getElementById('auth-submit-btn');
 
     if (!email || !password) {
-        alert("Email e Password sono obbligatori per accedere alla dogana.");
+        alert("Inserisci email e password.");
         return;
     }
 
-    if (window.isRegisterMode) {
-        const name = document.getElementById('auth-name').value.trim();
-        const surname = document.getElementById('auth-surname').value.trim();
-        
-        if (!name || !surname) {
-            alert("Nome e Cognome sono richiesti per emettere il passaporto.");
-            return;
-        }
+    btn.innerText = "Connessione ai server...";
 
-        const newUser = { email, password, name, surname, avatar: DEFAULT_AVATAR };
-        
-        // Salvataggio locale in attesa del cloud
-        localStorage.setItem(`fp_user_${email}`, JSON.stringify(newUser));
-        localStorage.setItem('fp_currentUser', JSON.stringify(newUser));
-        unlockPassport(newUser);
-
-    } else {
-        // Logica di Login
-        const savedUserJson = localStorage.getItem(`fp_user_${email}`);
-        if (savedUserJson) {
-            const savedUser = JSON.parse(savedUserJson);
-            if (savedUser.password === password) {
-                localStorage.setItem('fp_currentUser', JSON.stringify(savedUser));
-                unlockPassport(savedUser);
-            } else {
-                alert("Password errata. Riprova.");
+    try {
+        if (window.isRegisterMode) {
+            const name = document.getElementById('auth-name').value.trim();
+            const surname = document.getElementById('auth-surname').value.trim();
+            
+            if (!name || !surname) {
+                alert("Inserisci nome e cognome.");
+                btn.innerText = "Crea Passaporto Cloud";
+                return;
             }
+
+            // 1. Crea l'utente su Firebase Auth
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const uid = userCredential.user.uid;
+
+            // 2. Salva i dati anagrafici nel Database Firestore
+            const userData = { name, surname, email, avatar: DEFAULT_AVATAR };
+            await db.collection("users").doc(uid).set(userData);
+
+            unlockPassport(userData);
         } else {
-            alert("Nessun passaporto trovato con questa email. Registrati.");
+            // 1. Effettua il Login su Firebase Auth
+            const userCredential = await auth.signInWithEmailAndPassword(email, password);
+            const uid = userCredential.user.uid;
+
+            // 2. Recupera i dati da Firestore
+            const doc = await db.collection("users").doc(uid).get();
+            if (doc.exists) {
+                unlockPassport(doc.data());
+            } else {
+                unlockPassport({ email, name: "Capitano", surname: "Focus", avatar: DEFAULT_AVATAR });
+            }
         }
+    } catch (error) {
+        alert("Errore doganale: " + error.message);
+        btn.innerText = window.isRegisterMode ? "Crea Passaporto Cloud" : "Accedi al Passaporto";
     }
 };
 
-// Sblocca il passaporto, rimuove la sfocatura e popola i dati
+// Ascolta i cambiamenti di stato dell'utente in tempo reale
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        const doc = await db.collection("users").doc(user.uid).get();
+        if (doc.exists) {
+            unlockPassport(doc.data());
+        }
+    } else {
+        lockPassport();
+    }
+});
+
+// Sblocca il passaporto visivamente
 function unlockPassport(user) {
     const overlay = document.getElementById('auth-overlay');
     if(overlay) overlay.classList.add('hidden');
@@ -98,19 +124,17 @@ function unlockPassport(user) {
     const avatarImg = document.getElementById('profile-avatar');
     const headerImg = document.getElementById('header-avatar');
     
-    if (user.avatar) {
-        if(avatarImg) avatarImg.src = user.avatar;
-        if(headerImg) headerImg.src = user.avatar;
-    } else {
-        if(avatarImg) avatarImg.src = DEFAULT_AVATAR;
-        if(headerImg) headerImg.src = DEFAULT_AVATAR;
-    }
+    const avatarSrc = user.avatar || DEFAULT_AVATAR;
+    if(avatarImg) avatarImg.src = avatarSrc;
+    if(headerImg) headerImg.src = avatarSrc;
     
     document.getElementById('profile-name-display').readOnly = false;
     document.getElementById('profile-surname-display').readOnly = false;
+
+    if (typeof updateProfileStats === 'function') updateProfileStats();
 }
 
-// Blocca il passaporto e mostra il login
+// Blocca il passaporto
 function lockPassport() {
     const overlay = document.getElementById('auth-overlay');
     if(overlay) overlay.classList.remove('hidden');
@@ -125,48 +149,51 @@ function lockPassport() {
     if (headerImg) headerImg.src = DEFAULT_AVATAR;
 }
 
-// Esce dall'account
-window.logout = function() {
-    localStorage.removeItem('fp_currentUser');
+// Logout da Firebase
+window.logout = async function() {
+    await auth.signOut();
     document.getElementById('auth-email').value = "";
     document.getElementById('auth-password').value = "";
     lockPassport();
 };
 
-// Modifica nome/cognome nel passaporto
-window.updateUserData = function() {
-    const userJson = localStorage.getItem('fp_currentUser');
-    if (!userJson) return;
+// Aggiorna nome/cognome su Firestore in tempo reale
+window.updateUserData = async function() {
+    const user = auth.currentUser;
+    if (!user) return;
     
-    const user = JSON.parse(userJson);
-    user.name = document.getElementById('profile-name-display').value;
-    user.surname = document.getElementById('profile-surname-display').value;
+    const name = document.getElementById('profile-name-display').value;
+    const surname = document.getElementById('profile-surname-display').value;
     
-    localStorage.setItem('fp_currentUser', JSON.stringify(user));
-    localStorage.setItem(`fp_user_${user.email}`, JSON.stringify(user));
+    await db.collection("users").doc(user.uid).update({ name, surname });
 };
 
-// Carica la foto
-window.loadAvatar = function(event) {
+// Carica e aggiorna l'avatar sul Cloud
+window.loadAvatar = async function(event) {
     const file = event.target.files[0];
-    const userJson = localStorage.getItem('fp_currentUser');
-    if (!file || !userJson) return;
+    const user = auth.currentUser;
+    if (!file || !user) return;
 
-    const user = JSON.parse(userJson);
     const reader = new FileReader();
-    
-    reader.onload = function(e) {
+    reader.onload = async function(e) {
         const imageData = e.target.result;
-        user.avatar = imageData;
         
         document.getElementById('profile-avatar').src = imageData;
         const headerAvatar = document.getElementById('header-avatar');
         if (headerAvatar) headerAvatar.src = imageData;
         
-        localStorage.setItem('fp_currentUser', JSON.stringify(user));
-        localStorage.setItem(`fp_user_${user.email}`, JSON.stringify(user));
+        // Salva l'immagine su Firestore
+        await db.collection("users").doc(user.uid).update({ avatar: imageData });
     };
     reader.readAsDataURL(file);
 };
 
-window.addEventListener('load', checkAuthStatus);
+function updateProfileStats() {
+    if (typeof myWallet !== 'undefined') {
+        document.getElementById('stat-flights').innerText = myWallet.length;
+        if (typeof checkAchievements === 'function') {
+            const unlocked = checkAchievements(myWallet);
+            document.getElementById('stat-achievements').innerText = unlocked.size;
+        }
+    }
+}
