@@ -1,48 +1,179 @@
-// auth.js - Gestione Identità e Login Cloud
+// auth.js - Gestione Identità, Login e Passaporto Sfocato
 
-// Carica i dati salvati all'apertura
-function loadProfile() {
-    const savedName = localStorage.getItem('fp_userName');
-    const savedSurname = localStorage.getItem('fp_userSurname');
-    const savedAvatar = localStorage.getItem('fp_userAvatar');
+let isRegisterMode = false;
+const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2364748b'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E";
 
-    if (savedName) document.getElementById('profile-name').value = savedName;
-    if (savedSurname) document.getElementById('profile-surname').value = savedSurname;
-    
-    if (savedAvatar) {
-        document.getElementById('profile-avatar').src = savedAvatar;
-        // Aggiorna anche l'icona in alto a destra
-        const headerAvatar = document.getElementById('header-avatar');
-        if (headerAvatar) headerAvatar.src = savedAvatar;
+// Controlla se c'è un utente loggato all'apertura dell'app
+function checkAuthStatus() {
+    const userJson = localStorage.getItem('fp_currentUser');
+    if (userJson) {
+        const user = JSON.parse(userJson);
+        unlockPassport(user);
+    } else {
+        lockPassport();
     }
-    
     updateProfileStats();
 }
 
-// Converte l'immagine per salvarla nel Passaporto e nell'Header
-function loadAvatar(event) {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const imageData = e.target.result;
-            document.getElementById('profile-avatar').src = imageData;
-            
-            // Aggiorna in tempo reale anche l'icona in alto a destra
-            const headerAvatar = document.getElementById('header-avatar');
-            if (headerAvatar) headerAvatar.src = imageData;
-            
-            localStorage.setItem('fp_userAvatar', imageData);
-        };
-        reader.readAsDataURL(file);
+// Passa dalla modalità "Login" a "Registrazione"
+function toggleAuthMode() {
+    isRegisterMode = !isRegisterMode;
+    const title = document.getElementById('auth-title');
+    const btn = document.getElementById('auth-submit-btn');
+    const switchText = document.getElementById('auth-switch-text');
+    const registerFields = document.getElementById('auth-register-fields');
+
+    if (isRegisterMode) {
+        title.innerText = "Registrazione";
+        btn.innerText = "Emetti Passaporto";
+        switchText.innerText = "Hai già un passaporto? Accedi";
+        registerFields.classList.remove('hidden');
+    } else {
+        title.innerText = "Verifica Identità";
+        btn.innerText = "Accedi al Passaporto";
+        switchText.innerText = "Richiedi un Passaporto (Registrati)";
+        registerFields.classList.add('hidden');
     }
 }
 
-// Aggiorna dinamicamente i contatori dei voli e dei trofei
+// Gestisce il click sul pulsante Accedi/Registrati
+function handleAuthSubmit() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value.trim();
+
+    if (!email || !password) {
+        alert("Email e Password sono obbligatori per accedere alla dogana.");
+        return;
+    }
+
+    if (isRegisterMode) {
+        const name = document.getElementById('auth-name').value.trim();
+        const surname = document.getElementById('auth-surname').value.trim();
+        
+        if (!name || !surname) {
+            alert("Nome e Cognome sono richiesti per emettere il passaporto.");
+            return;
+        }
+
+        const newUser = { email, password, name, surname, avatar: DEFAULT_AVATAR };
+        
+        // Simulazione salvataggio su Cloud (per ora in localStorage)
+        localStorage.setItem(`fp_user_${email}`, JSON.stringify(newUser));
+        localStorage.setItem('fp_currentUser', JSON.stringify(newUser));
+        unlockPassport(newUser);
+
+    } else {
+        // Logica di Login
+        const savedUserJson = localStorage.getItem(`fp_user_${email}`);
+        if (savedUserJson) {
+            const savedUser = JSON.parse(savedUserJson);
+            if (savedUser.password === password) {
+                localStorage.setItem('fp_currentUser', JSON.stringify(savedUser));
+                unlockPassport(savedUser);
+            } else {
+                alert("Password errata. Riprova.");
+            }
+        } else {
+            alert("Nessun passaporto trovato con questa email. Registrati.");
+        }
+    }
+}
+
+// Sblocca il passaporto, rimuove la sfocatura e popola i dati
+function unlockPassport(user) {
+    // Nascondi il pannello di login
+    const overlay = document.getElementById('auth-overlay');
+    if(overlay) overlay.classList.add('hidden');
+
+    // Rimuovi la sfocatura e attiva l'interazione
+    const passportData = document.getElementById('passport-data-container');
+    if(passportData) {
+        passportData.classList.remove('blur-md', 'pointer-events-none', 'opacity-40');
+        passportData.classList.add('opacity-100');
+    }
+
+    // Popola i campi
+    document.getElementById('profile-name-display').value = user.name || "";
+    document.getElementById('profile-surname-display').value = user.surname || "";
+    
+    // Gestione Avatar
+    const avatarImg = document.getElementById('profile-avatar');
+    const headerImg = document.getElementById('header-avatar');
+    if (user.avatar) {
+        if(avatarImg) avatarImg.src = user.avatar;
+        if(headerImg) headerImg.src = user.avatar;
+    } else {
+        if(avatarImg) avatarImg.src = DEFAULT_AVATAR;
+        if(headerImg) headerImg.src = DEFAULT_AVATAR;
+    }
+    
+    // Rendi i campi modificabili
+    document.getElementById('profile-name-display').readOnly = false;
+    document.getElementById('profile-surname-display').readOnly = false;
+}
+
+// Blocca il passaporto e mostra il login
+function lockPassport() {
+    const overlay = document.getElementById('auth-overlay');
+    if(overlay) overlay.classList.remove('hidden');
+
+    const passportData = document.getElementById('passport-data-container');
+    if(passportData) {
+        passportData.classList.add('blur-md', 'pointer-events-none', 'opacity-40');
+        passportData.classList.remove('opacity-100');
+    }
+    
+    // Resetta l'icona in alto a destra
+    const headerImg = document.getElementById('header-avatar');
+    if (headerImg) headerImg.src = DEFAULT_AVATAR;
+}
+
+function logout() {
+    localStorage.removeItem('fp_currentUser');
+    // Svuota i campi del login
+    document.getElementById('auth-email').value = "";
+    document.getElementById('auth-password').value = "";
+    lockPassport();
+}
+
+// Se l'utente loggato modifica nome/cognome nel passaporto
+function updateUserData() {
+    const userJson = localStorage.getItem('fp_currentUser');
+    if (!userJson) return;
+    
+    const user = JSON.parse(userJson);
+    user.name = document.getElementById('profile-name-display').value;
+    user.surname = document.getElementById('profile-surname-display').value;
+    
+    localStorage.setItem('fp_currentUser', JSON.stringify(user));
+    localStorage.setItem(`fp_user_${user.email}`, JSON.stringify(user));
+}
+
+function loadAvatar(event) {
+    const file = event.target.files[0];
+    const userJson = localStorage.getItem('fp_currentUser');
+    if (!file || !userJson) return;
+
+    const user = JSON.parse(userJson);
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+        const imageData = e.target.result;
+        user.avatar = imageData;
+        
+        document.getElementById('profile-avatar').src = imageData;
+        const headerAvatar = document.getElementById('header-avatar');
+        if (headerAvatar) headerAvatar.src = imageData;
+        
+        localStorage.setItem('fp_currentUser', JSON.stringify(user));
+        localStorage.setItem(`fp_user_${user.email}`, JSON.stringify(user));
+    };
+    reader.readAsDataURL(file);
+}
+
 function updateProfileStats() {
     if (typeof myWallet !== 'undefined') {
         document.getElementById('stat-flights').innerText = myWallet.length;
-        
         if (typeof checkAchievements === 'function') {
             const unlocked = checkAchievements(myWallet);
             document.getElementById('stat-achievements').innerText = unlocked.size;
@@ -50,18 +181,5 @@ function updateProfileStats() {
     }
 }
 
-// Simulazione pulsante Cloud per il prossimo step
-function initCloudAuth() {
-    const btn = document.getElementById('btn-cloud-sync');
-    btn.innerHTML = "🔄 Connessione ai server...";
-    btn.classList.replace('bg-slate-800', 'bg-blue-600');
-    
-    setTimeout(() => {
-        alert("Modulo server pronto! Nel prossimo step collegheremo un database reale per sincronizzare i tuoi biglietti e la tua foto su tutti i tuoi dispositivi.");
-        btn.innerHTML = "✅ Sincronizzato";
-        btn.classList.replace('bg-blue-600', 'bg-emerald-500');
-    }, 1500);
-}
-
-// Avvia il caricamento quando la finestra è pronta
-window.addEventListener('load', loadProfile);
+// Inizializza il controllo all'apertura
+window.addEventListener('load', checkAuthStatus);
